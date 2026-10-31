@@ -51,6 +51,17 @@
       font-family: 'Inter', 'Sarabun', sans-serif;
     }
     
+
+    /* Login-style welcome screen: visual entry only, no credentials required */
+    #loginWelcome{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;overflow:auto;padding:20px;background:radial-gradient(ellipse at 18% 18%,rgba(14,165,233,.24),transparent 35%),radial-gradient(ellipse at 85% 82%,rgba(139,92,246,.22),transparent 36%),linear-gradient(135deg,#020617 0%,#0b1830 55%,#102b40 100%)}
+    #loginWelcome.is-closed{display:none}
+    .login-shell{width:min(440px,100%);padding:clamp(24px,5vw,42px);border:1px solid rgba(148,163,184,.24);border-radius:28px;background:rgba(15,23,42,.82);backdrop-filter:blur(18px);box-shadow:0 28px 90px rgba(0,0,0,.48),0 0 65px rgba(14,165,233,.12);text-align:center}
+    .login-logo{width:82px;height:82px;margin:0 auto 22px;border-radius:25px;display:grid;place-items:center;background:linear-gradient(135deg,#0ea5e9,#2563eb 55%,#7c3aed);box-shadow:0 12px 35px rgba(37,99,235,.35);border:1px solid rgba(255,255,255,.2)}
+    .login-enter{width:100%;padding:15px 20px;border-radius:16px;background:linear-gradient(100deg,#0284c7,#2563eb 55%,#7c3aed);color:#fff;font-weight:800;box-shadow:0 12px 28px rgba(37,99,235,.28);transition:transform .2s,filter .2s}
+    .login-enter:hover{transform:translateY(-2px);filter:brightness(1.12)}
+    .login-enter:focus-visible{outline:3px solid #67e8f9;outline-offset:4px}
+    @media(max-height:540px){#loginWelcome{padding:10px}.login-shell{padding:18px}.login-logo{width:58px;height:58px;margin-bottom:12px}.login-logo i{font-size:25px!important}.login-shell .login-subtitle{margin-top:8px!important;margin-bottom:16px!important}}
+
     /* Print Optimization Rules */
     @media print {
       body {
@@ -111,6 +122,21 @@
 </head>
 <body class="h-full flex flex-col justify-between bg-slate-950 text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
 
+
+  <!-- Login-style welcome: direct entry, intentionally no username/password fields -->
+  <section id="loginWelcome" aria-label="หน้าเข้าสู่ระบบ ROUTER">
+    <div class="login-shell">
+      <div class="login-logo"><i class="fa-solid fa-industry text-white text-4xl"></i></div>
+      <div class="text-sky-300 text-xs font-bold tracking-[.22em]">ROUTER CENTRAL SYSTEM</div>
+      <h2 class="text-white text-2xl sm:text-3xl font-black mt-3">ยินดีต้อนรับ</h2>
+      <p class="text-slate-300 text-sm font-semibold mt-2">Multi-Machine Central Dashboard</p>
+      <p class="login-subtitle text-slate-400 text-sm leading-relaxed mt-5 mb-7">ระบบจัดการและวิเคราะห์ข้อมูลเครื่องจักร ROUTER<br>ติดตามประวัติการทำงานในหน้าจอเดียว</p>
+      <button type="button" class="login-enter" onclick="enterRouterDashboard()"><i class="fa-solid fa-right-to-bracket mr-2"></i>เข้าสู่ระบบ</button>
+      <div class="mt-6 flex justify-center gap-4 text-[11px] text-slate-400"><span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i>เข้าใช้งานได้ทันที</span><span><i class="fa-solid fa-cloud text-sky-400 mr-1"></i>Google Sheets</span></div>
+      <p class="text-slate-600 text-[10px] mt-7">© 2026 ROUTER Multi-Machine System</p>
+    </div>
+  </section>
+
   <!-- Header -->
   <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 no-print shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -128,6 +154,7 @@
 
       <!-- Quick Global Actions Bar -->
       <div class="flex items-center gap-2 flex-wrap justify-end">
+        <button onclick="returnToLoginWelcome()" title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก" class="px-3.5 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2"><i class="fa-solid fa-house"></i><span>หน้าหลัก</span></button>
         <button onclick="fetchDataFromGoogleSheets()" class="px-3.5 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2">
           <i class="fa-solid fa-cloud-arrow-down"></i> ดึงข้อมูลจาก Google Sheet
         </button>
@@ -499,6 +526,19 @@
 
     // Active Application State
     let state = loadSavedState();
+
+
+    // Login-style entry screen (no authentication fields or credential checks).
+    function enterRouterDashboard(){
+      const welcome=document.getElementById('loginWelcome');
+      if(welcome) welcome.classList.add('is-closed');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function returnToLoginWelcome(){
+      const welcome=document.getElementById('loginWelcome');
+      if(welcome) welcome.classList.remove('is-closed');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
 
     // On DOM Loaded
     window.addEventListener('DOMContentLoaded', () => {
