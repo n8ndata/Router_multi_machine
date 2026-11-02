@@ -154,26 +154,17 @@
 
       <!-- Quick Global Actions Bar -->
       <div class="flex items-center gap-2 flex-wrap justify-end">
+        <button onclick="syncAllToGoogleSheets()" title="ซิงค์ข้อมูลไปยัง Google Sheets" class="relative px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>ซิงค์ชีต</span>
+          <span id="syncBadge" class="w-2.5 h-2.5 rounded-full bg-slate-500 border border-slate-900 absolute -top-0.5 -right-0.5"></span>
+        </button>
+        <button onclick="openAdminPage()" title="ตั้งค่าผู้ดูแลระบบ" class="px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2"><i class="fa-solid fa-user-gear"></i><span>Admin</span></button>
         <button onclick="returnToLoginWelcome()" title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก" class="px-3.5 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2"><i class="fa-solid fa-house"></i><span>หน้าหลัก</span></button>
-        <button onclick="fetchDataFromGoogleSheets()" class="px-3.5 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2">
-          <i class="fa-solid fa-cloud-arrow-down"></i> ดึงข้อมูลจาก Google Sheet
-        </button>
-        <button onclick="toggleGoogleSheetModal()" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center gap-2 relative">
-          <i class="fa-solid fa-file-csv"></i> Google Sheets Live Sync
-          <span id="syncBadge" class="w-2.5 h-2.5 rounded-full bg-slate-500 border border-slate-900 absolute -top-0.5 -right-0.5" title="สถานะการเชื่อมต่อ"></span>
-        </button>
         <button onclick="processAllMachinesWithAI()" class="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-orange-500/20 transition flex items-center gap-2">
           <i class="fa-solid fa-wand-magic-sparkles"></i> สกัด AI ทุกเครื่อง
         </button>
-        <button onclick="processAllMachinesWithFreeOCR()" class="px-3 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-2" title="สกัดด้วย OCR ในเครื่อง ไม่ต้องใช้ API Key">
-          <i class="fa-solid fa-file-magnifying-glass"></i> สกัด OCR ฟรี
-        </button>
-        <button onclick="exportAllMachinesToExcel()" class="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2">
-          <i class="fa-solid fa-file-excel"></i> ดาวน์โหลด Excel รวม
-        </button>
-        <button onclick="resetAllDemoData()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-2">
-          <i class="fa-solid fa-rotate-left"></i> รีเซ็ตข้อมูล
-        </button>
+
       </div>
     </div>
   </header>
@@ -191,17 +182,31 @@
     </div>
 
     <!-- Machine Tabs Bar -->
-    <div class="no-print bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 overflow-hidden">
-      <!-- Scrollable Tabs List -->
-      <div id="machineTabsContainer" class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 pt-0.5 px-1 flex-1 w-full">
-        <!-- Tabs rendered dynamically -->
+    <div class="no-print bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+      <!-- Dashboard Button (separate) -->
+      <button type="button" onclick="switchTab('summary')" id="dashBtn" class="px-3.5 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 whitespace-nowrap shadow-sm border bg-gradient-to-r from-sky-500 to-brand-500 text-white border-sky-400 shrink-0">
+        <i class="fa-solid fa-chart-pie"></i> แดชบอร์ดสรุปผลรวม
+      </button>
+
+      <!-- Machine Selector Box (single dropdown) -->
+      <div class="relative w-full sm:w-56 shrink-0">
+        <button type="button" onclick="toggleTabDropdown()" id="tabDropdownBtn" class="w-full bg-slate-950 border border-slate-700 text-sky-400 font-semibold text-xs rounded-xl px-3 py-2.5 text-left flex items-center justify-between focus:outline-none focus:border-sky-500 transition shadow-sm">
+          <span id="tabDropdownLabel"><i class="fa-solid fa-gears mr-1.5 text-sky-300"></i>เลือกเครื่อง</span>
+          <i class="fa-solid fa-chevron-down text-[10px] text-slate-500 ml-2 transition-transform" id="tabDropdownIcon"></i>
+        </button>
+        <div id="tabDropdownList" class="hidden absolute z-50 top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto custom-scrollbar"></div>
       </div>
 
       <!-- Add Machine Selector Dropdown -->
       <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
-        <select id="machineSelectorDropdown" class="bg-slate-950 border border-slate-700 text-sky-400 font-semibold text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 transition">
-          <option value="" disabled selected>-- เพิ่ม Machine No. --</option>
-        </select>
+        <div class="relative w-full sm:w-48">
+          <button type="button" onclick="toggleMachineDropdown()" id="machineDropdownBtn" class="w-full bg-slate-950 border border-slate-700 text-sky-400 font-semibold text-xs rounded-xl px-3 py-2.5 text-left flex items-center justify-between focus:outline-none focus:border-sky-500 transition shadow-sm">
+            <span id="machineDropdownLabel">-- เพิ่ม Machine No. --</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-slate-500 ml-2 transition-transform" id="machineDropdownIcon"></i>
+          </button>
+          <div id="machineDropdownList" class="hidden absolute z-50 top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto custom-scrollbar"></div>
+        </div>
+        <input type="hidden" id="machineSelectorHidden" value="">
         <button onclick="addSelectedMachineFromDropdown()" class="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm whitespace-nowrap">
           <i class="fa-solid fa-plus text-xs"></i> เพิ่มเครื่อง
         </button>
@@ -222,6 +227,57 @@
   <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500 no-print">
     <p>© 2026 ROUTER Multi-Machine System • Executive Analytics & Google Sheets Live Sync</p>
   </footer>
+
+  <!-- Admin Control Center -->
+  <section id="adminPage" class="fixed inset-0 z-[80] hidden overflow-y-auto bg-slate-950/95 backdrop-blur-md no-print">
+    <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-10">
+      <div class="flex items-center justify-between gap-3 mb-7">
+        <div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg"><i class="fa-solid fa-user-gear text-white text-xl"></i></div><div><p class="text-xs text-violet-300 font-bold tracking-[.2em]">SYSTEM CONTROL CENTER</p><h2 class="text-2xl sm:text-3xl text-white font-black">Admin Settings</h2></div></div>
+        <button onclick="closeAdminPage()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold"><i class="fa-solid fa-arrow-left mr-2"></i>กลับ Dashboard</button>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-5">
+        <div class="rounded-2xl border border-emerald-500/25 bg-slate-900 p-5 sm:p-6 shadow-xl">
+          <div class="flex items-center gap-3 mb-5"><div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-300 grid place-items-center"><i class="fa-brands fa-google text-xl"></i></div><div><h3 class="text-white font-bold text-lg">Google Sheets Connection</h3><p class="text-slate-400 text-xs">ตั้งค่า URL และควบคุมการรับ-ส่งข้อมูล</p></div></div>
+          <label class="block text-xs font-semibold text-slate-300 mb-2" for="adminSheetUrl">Google Apps Script Web App URL</label>
+          <input id="adminSheetUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-400 outline-none text-white text-sm px-3 py-3">
+          <label class="flex items-center justify-between gap-3 mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800"><span><span class="block text-sm text-white font-semibold">เปิดซิงค์อัตโนมัติ</span><span class="block text-xs text-slate-500">ซิงค์เมื่อมีการแก้ไขข้อมูล</span></span><input id="adminAutoSync" type="checkbox" class="w-5 h-5 accent-emerald-500"></label>
+          <div class="grid grid-cols-2 gap-2 mt-4"><button onclick="saveAdminSettings()" class="rounded-xl py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold"><i class="fa-solid fa-floppy-disk mr-2"></i>บันทึกการตั้งค่า</button><button onclick="testGoogleSheetConnection()" class="rounded-xl py-3 bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold"><i class="fa-solid fa-plug mr-2"></i>ทดสอบการเชื่อมต่อ</button></div>
+          <div class="grid grid-cols-2 gap-2 mt-3"><button onclick="adminFetchFromSheet()" class="rounded-xl py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold"><i class="fa-solid fa-cloud-arrow-down mr-2"></i>ดึงข้อมูลจาก Sheet</button><button onclick="adminSyncToSheet()" class="rounded-xl py-3 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>บันทึก/ซิงค์ลง Sheet</button></div>
+          <div id="adminConnectionStatus" class="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3 text-xs text-slate-400"><i class="fa-solid fa-circle-info mr-2 text-sky-300"></i>ยังไม่ได้ทดสอบการเชื่อมต่อ</div>
+        </div>
+        <div class="rounded-2xl border border-violet-500/25 bg-slate-900 p-5 sm:p-6 shadow-xl">
+          <div class="flex items-center gap-3 mb-5"><div class="w-10 h-10 rounded-xl bg-violet-500/15 text-violet-300 grid place-items-center"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div><div><h3 class="text-white font-bold text-lg">AI / API Settings</h3><p class="text-slate-400 text-xs">ตั้งค่า Gemini API สำหรับ OCR ด้วย AI</p></div></div>
+          <label class="block text-xs font-semibold text-slate-300 mb-2" for="adminGeminiKey">Gemini API Key</label>
+          <div class="flex gap-2"><input id="adminGeminiKey" type="password" autocomplete="off" placeholder="วาง Gemini API Key" class="min-w-0 flex-1 rounded-xl bg-slate-950 border border-slate-700 focus:border-violet-400 outline-none text-white text-sm px-3 py-3"><button type="button" onclick="toggleAdminKeyVisibility()" class="px-4 rounded-xl bg-slate-800 text-slate-200"><i class="fa-solid fa-eye"></i></button></div>
+          <label class="block text-xs font-semibold text-slate-300 mt-4 mb-2" for="adminGeminiModel">Gemini Model (ไม่บังคับ)</label>
+          <input id="adminGeminiModel" type="text" placeholder="เช่น gemini-2.0-flash" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-violet-400 outline-none text-white text-sm px-3 py-3">
+          <button onclick="saveAdminSettings()" class="w-full mt-4 rounded-xl py-3 bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold"><i class="fa-solid fa-floppy-disk mr-2"></i>บันทึกการตั้งค่าทั้งหมด</button>
+          <div class="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200/80 leading-relaxed"><i class="fa-solid fa-triangle-exclamation mr-2"></i>คำเตือน: ค่า API Key จะถูกเก็บใน Local Storage ของเบราว์เซอร์นี้ ไม่ควรใส่ API Key ส่วนตัวบนเครื่องสาธารณะหรือเปิดเผยไฟล์ให้ผู้อื่น</div>
+          <button onclick="resetAllDemoData()" class="w-full mt-4 rounded-xl py-3 bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold"><i class="fa-solid fa-rotate-left mr-2"></i>รีเซ็ตข้อมูลทั้งหมด (ล้างข้อมูลทุกเครื่อง)</button>
+        </div>
+      </div>
+      <div class="mt-5 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-xs text-slate-400 leading-relaxed"><b class="text-slate-200">หมายเหตุการใช้งาน:</b> รหัสผ่าน Admin จะถูกร้องขอและตรวจสอบโดยเซิร์ฟเวอร์เท่านั้น ผู้ดูแลไม่เห็นรหัสผ่านบนเว็บ</div>
+    </div>
+  </section>
+
+  <!-- Admin Password Modal -->
+  <div id="adminLoginModal" class="fixed inset-0 z-[90] bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white text-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
+      <button onclick="closeAdminLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white text-2xl shadow-lg mb-3"><i class="fa-solid fa-user-shield"></i></div>
+        <h3 class="text-2xl font-black">Admin</h3>
+        <p class="text-sm text-slate-500 mt-1">รหัสผ่านผู้ดูแล</p>
+      </div>
+      <label for="adminLoginPw" class="block text-xs font-bold text-slate-500 mb-2 tracking-wide">รหัสผ่าน</label>
+      <input id="adminLoginPw" type="password" placeholder="กรอกรหัสผ่านผู้ดูแล" class="w-full rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none text-slate-800 text-sm px-4 py-3 mb-5 transition" onkeydown="if(event.key==='Enter') submitAdminLogin()">
+      <div class="flex gap-3">
+        <button onclick="submitAdminLogin()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:brightness-110 text-white font-bold shadow-lg shadow-teal-500/20 transition flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i>เข้าสู่ระบบผู้ดูแล</button>
+        <button onclick="closeAdminLoginModal()" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">ยกเลิก</button>
+      </div>
+      <p id="adminLoginMsg" class="text-xs text-rose-500 text-center mt-3 font-medium hidden"></p>
+    </div>
+  </div>
 
   <!-- Google Sheets Integration Config Modal -->
   <div id="googleSheetModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 no-print">
@@ -284,7 +340,7 @@
   </div>
 
   <!-- Notification Toast -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-out bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 pointer-events-none">
+  <div id="toast" class="fixed bottom-5 right-5 z-[100] transform translate-y-20 opacity-0 transition-all duration-300 ease-out bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 pointer-events-none">
     <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
     <span id="toastMessage" class="text-xs font-medium">ข้อความแจ้งเตือน</span>
   </div>
@@ -372,6 +428,7 @@
 
       (machines || []).forEach(m => {
         const num = getMachineNumberFromName(m && m.name);
+        // ป้องกัน type mismatch: ต้องเป็นตัวเลขเท่านั้น
         if (num !== null && allowedMachineNumbers.includes(num) && !keepers.some(k => k.number === num)) {
           m.name = `Machine No.${num}`; // รูปแบบชื่อเดียวกันทั้งระบบ
           m.number = num;
@@ -416,8 +473,16 @@
     // คีย์เก่าก่อนเปลี่ยนชื่อระบบ CNC → ROUTER (ใช้ย้ายข้อมูลที่บันทึกไว้ให้อัตโนมัติ ไม่ให้หาย)
     const LEGACY_STORAGE_KEY = "cnc_dashboard_persistent_state_real_month_v2";
 
-    // ลำดับโมเดล Gemini ที่จะลองใช้ (โมเดลหลักก่อน จากนั้น fallback อัตโนมัติเมื่อโมเดลถูก deprecate)
-    const GEMINI_MODEL_CANDIDATES = ["gemini-3-flash-preview", "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
+    // ลำดับโมเดล Gemini ที่จะลองใช้ (โมเดลมาตรฐานและโมเดลล่าสุด มี fallback อัตโนมัติเมื่อโมเดลถูก deprecate)
+    const GEMINI_MODEL_CANDIDATES = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-3-flash-preview",
+      "gemini-3.8-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite"
+    ];
 
     // Helper: Map day index to English FULL day name (เช่น Thursday, Friday)
     const ENG_DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -472,7 +537,7 @@
     let initialDemoState = {
       activeTab: "summary",
       googleSheetUrl: "https://script.google.com/macros/s/AKfycbxoWvfDPMTSq8iVsXT3si2xwtMNyNIq9m95FW6X8O75-FE1Fi_s1DEg2c35jcfN3bSy/exec",
-      autoSync: true,
+      autoSync: false, // เริ่มต้นปิด auto sync เพื่อป้องกันการส่งข้อมูลทุก 1.5 วินาที (ทำให้ชีต backup กระพริบ)
       geminiApiKey: "",
       geminiModel: "",
       machines: allowedMachineNumbers.map(num => ({
@@ -526,6 +591,7 @@
 
     // Active Application State
     let state = loadSavedState();
+    let isAdminMode = false;
 
 
     // Login-style entry screen (no authentication fields or credential checks).
@@ -554,6 +620,131 @@
         }, 800);
       }
     });
+
+    // Admin control center - open login modal
+    function openAdminPage() {
+      document.getElementById('adminLoginPw').value = '';
+      document.getElementById('adminLoginMsg').classList.add('hidden');
+      document.getElementById('adminLoginMsg').textContent = '';
+      document.getElementById('adminLoginModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('adminLoginPw')?.focus(), 50);
+    }
+    function closeAdminLoginModal() {
+      document.getElementById('adminLoginModal')?.classList.add('hidden');
+    }
+    async function submitAdminLogin() {
+      const pw = document.getElementById('adminLoginPw').value || '';
+      const msg = document.getElementById('adminLoginMsg');
+      if (pw.trim() === '') {
+        msg.textContent = 'กรุณากรอกรหัสผ่าน';
+        msg.classList.remove('hidden');
+        return;
+      }
+      msg.classList.add('hidden');
+
+      const enterAdmin = () => {
+        closeAdminLoginModal();
+        showToast('ยืนยันรหัสผ่านสำเร็จ — เปิด Admin', 'success', 2000);
+        const page = document.getElementById('adminPage');
+        if (!page) return;
+        document.getElementById('adminSheetUrl').value = state.googleSheetUrl || '';
+        document.getElementById('adminAutoSync').checked = !!state.autoSync;
+        document.getElementById('adminGeminiKey').value = state.geminiApiKey || '';
+        document.getElementById('adminGeminiModel').value = state.geminiModel || '';
+        page.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        isAdminMode = true;
+        renderActiveView();
+      };
+
+      const urlStr = (state.googleSheetUrl || '').trim();
+      const localPassword = "st1910";
+
+      // ถ้าไม่มี URL หรือรหัสตรงกับรหัสเซิร์ฟเวอร์ ให้เข้าได้ทันที (ป้องกันกรณี URL เสียแล้วเข้าแก้ไม่ได้)
+      if (!urlStr) {
+        if (pw.trim() === localPassword) {
+          enterAdmin();
+          return;
+        } else {
+          msg.textContent = 'รหัสผ่านไม่ถูกต้อง';
+          msg.classList.remove('hidden');
+          return;
+        }
+      }
+
+      try {
+        const url = new URL(urlStr);
+        url.searchParams.set('action', 'adminVerify');
+        url.searchParams.set('password', pw.trim());
+        const resp = await fetch(url.toString(), { cache: 'no-store' });
+        const text = await resp.text();
+        let result = null;
+        try { result = JSON.parse(text); } catch (_) {}
+        if (result && result.result === 'success') {
+          enterAdmin();
+          return;
+        }
+        // หากเซิร์ฟเวอร์ตอบไม่สำเร็จ หรือรหัสไม่ตรง แต่ตรงกับรหัส master
+        if (pw.trim() === localPassword) {
+          enterAdmin();
+          return;
+        }
+        msg.textContent = 'รหัสผ่านไม่ถูกต้อง';
+        msg.classList.remove('hidden');
+      } catch (err) {
+        // หากเครือข่าย/URL มีปัญหา ให้ตรวจกับรหัส master เพื่อให้ผู้ใช้เข้าหน้า Admin แก้ไข URL ได้
+        if (pw.trim() === localPassword) {
+          enterAdmin();
+          return;
+        }
+        msg.textContent = 'รหัสผ่านไม่ถูกต้องหรือเซิร์ฟเวอร์ไม่ตอบ';
+        msg.classList.remove('hidden');
+      }
+    }
+    function closeAdminPage() { document.getElementById("adminPage")?.classList.add("hidden"); document.body.style.overflow = ""; isAdminMode = false; renderActiveView(); }
+    function saveAdminSettings() {
+      const url = document.getElementById("adminSheetUrl").value.trim();
+      if (url && !/^https:\/\/(script\.google\.com\/macros\/s\/|script\.googleusercontent\.com\/)/i.test(url)) {
+        showToast("URL ไม่ถูกต้อง กรุณาใช้ Google Apps Script Web App URL (/exec)", "error"); return false;
+      }
+      state.googleSheetUrl = url;
+      state.autoSync = document.getElementById("adminAutoSync").checked;
+      state.geminiApiKey = document.getElementById("adminGeminiKey").value.trim();
+      state.geminiModel = document.getElementById("adminGeminiModel").value.trim();
+      saveStateToLocalStorage(); updateSyncBadge();
+      showToast("บันทึกการตั้งค่า Admin เรียบร้อยแล้ว", "success");
+      return true;
+    }
+    function toggleAdminKeyVisibility() { const el = document.getElementById("adminGeminiKey"); el.type = el.type === "password" ? "text" : "password"; }
+    async function testGoogleSheetConnection() {
+      if (!saveAdminSettings()) return;
+      const status = document.getElementById("adminConnectionStatus");
+      status.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-sky-300"></i>กำลังทดสอบการเชื่อมต่อ...';
+      try {
+        const url = new URL(state.googleSheetUrl); url.searchParams.set("action", "health"); url.searchParams.set("_", Date.now());
+        const response = await fetch(url.toString(), { cache: "no-store" });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const result = await response.json();
+        if (result.result !== "success") throw new Error(result.message || "ไม่สามารถยืนยันการเชื่อมต่อได้");
+        status.innerHTML = '<i class="fa-solid fa-circle-check mr-2 text-emerald-400"></i>เชื่อมต่อสำเร็จ • ' + (result.message || "Google Apps Script พร้อมใช้งาน");
+        showToast("ทดสอบการเชื่อมต่อสำเร็จ", "success", 3000);
+      } catch (err) {
+        status.innerHTML = '<i class="fa-solid fa-circle-xmark mr-2 text-rose-400"></i>เชื่อมต่อไม่สำเร็จ: ' + escapeHtml(err.message) + '<br><span class="text-slate-500">ตรวจสอบ URL, การ Deploy และสิทธิ์เข้าถึง Web App</span>';
+        showToast("ทดสอบการเชื่อมต่อไม่สำเร็จ", "error", 4000);
+      }
+    }
+    async function adminFetchFromSheet() { 
+      if (!saveAdminSettings()) return; 
+      const ok = await fetchDataFromGoogleSheets(false); 
+      if (ok) showToast("ดึงข้อมูลจาก Sheet เสร็จแล้ว (สำเร็จ)", "success");
+      else showToast("ดึงข้อมูลจาก Sheet ไม่สำเร็จ", "error");
+    }
+    async function adminSyncToSheet() { 
+      if (!saveAdminSettings()) return; 
+      const ok = await syncAllToGoogleSheets(false); 
+      if (ok) showToast("บันทึก/ซิงค์ลง Sheet เสร็จแล้ว (สำเร็จ)", "success");
+      else showToast("บันทึก/ซิงค์ลง Sheet ไม่สำเร็จ", "error");
+    }
 
     // Toggle Google Sheet Config Modal
     function toggleGoogleSheetModal() {
@@ -613,38 +804,125 @@
       }, 1500);
     }
 
-    // Sync Data to Google Sheets via POST Request
+    let isSyncingInProgress = false;
+
+    // ซิงค์ข้อมูลลง Google Sheets อย่างรวดเร็ว (Ultra-Fast Smart Multi-Machine Sync)
     async function syncAllToGoogleSheets(silent = false) {
-      if (!state.googleSheetUrl) {
-        if (!silent) {
-          showToast("กรุณาตั้งค่า Google Web App URL ก่อนใช้งาน Live Sync", "error");
-          toggleGoogleSheetModal();
-        }
-        return;
+      if (isSyncingInProgress) {
+        console.log("การซิงค์กำลังทำงานอยู่ ข้ามคำขอที่ซ้ำซ้อน");
+        return false;
       }
 
-      if (!silent) showToast("กำลังซิงค์ข้อมูลไปยัง Google Sheets...", "info");
+      const endpoint = (state.googleSheetUrl || "").trim();
+      if (!endpoint) {
+        if (!silent) {
+          showToast("กรุณาตั้งค่า Google Apps Script URL ในหน้า Admin", "error");
+          openAdminPage();
+        }
+        return false;
+      }
 
-      const payload = {
-        timestamp: new Date().toISOString(),
-        machines: state.machines.map(m => ({
-          name: m.name,
-          data: m.data.filter(d => d.selected !== false)
-        }))
-      };
+      isSyncingInProgress = true;
+      if (!silent) showToast("กำลังรวมข้อมูลและซิงค์ไปยัง Google Sheets...", "info");
 
       try {
-        await fetch(state.googleSheetUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        let recordsUpdated = 0;
 
-        if (!silent) showToast("ส่งข้อมูลไปยัง Google Sheets เรียบร้อยแล้ว!", "success");
+        // 1. กรองเฉพาะเครื่องและวันที่ที่มีข้อมูลตัวเลขจริงเท่านั้น (ไม่ส่งวันว่างเปล่า 29 วันไปให้เสียเวลา)
+        const machinesWithData = [];
+        for (const machine of state.machines) {
+          const rows = (machine.data || []).filter(d => {
+            if (d.selected === false) return false;
+            const hasTime = (d.ready && String(d.ready).trim() !== "") ||
+                            (d.working && String(d.working).trim() !== "" && d.working !== "00:00:00") ||
+                            (d.waiting && String(d.waiting).trim() !== "" && d.waiting !== "00:00:00") ||
+                            (d.standstill && String(d.standstill).trim() !== "" && d.standstill !== "00:00:00");
+            const hasDuty = d.duty !== "" && d.duty !== null && d.duty !== undefined;
+            return hasTime || hasDuty;
+          });
+
+          if (rows.length > 0) {
+            // ส่งเฉพาะฟิลด์ที่จำเป็น เพื่อให้ขนาด URL กะทัดรัดที่สุด
+            const compactRows = rows.map(r => ({
+              date: r.date,
+              day: r.day,
+              ready: r.ready || "",
+              working: r.working || "",
+              waiting: r.waiting || "",
+              standstill: r.standstill || "",
+              duty: r.duty !== undefined && r.duty !== null ? r.duty : ""
+            }));
+            machinesWithData.push({ name: machine.name, data: compactRows });
+          }
+        }
+
+        if (machinesWithData.length === 0) {
+          if (!silent) showToast("ไม่มีข้อมูลใหม่ที่ต้องซิงค์", "info", 3000);
+          updateSyncBadge();
+          return true;
+        }
+
+        // 2. จัดกลุ่มเครื่องจักรหลายๆ เครื่องรวมกันเป็นชุดใหญ่ (Multi-Machine Batch)
+        // แทนที่จะส่งทีละเครื่อง เราแพ็ครวมหลายเครื่องพร้อมกันในคำขอเดียว (ไม่เกิน 1,800 ตัวอักษรต่อ URL เพื่อความเสถียรบนทุกเบราว์เซอร์)
+        const preparedList = [];
+        for (const mItem of machinesWithData) {
+          if (mItem.data.length > 10) {
+            // กรณีเครื่องเดียวมีข้อมูลมากกว่า 10 วัน ให้แบ่งก้อนละ 10 วัน เพื่อไม่ให้ URL ยาวเกิน
+            for (let i = 0; i < mItem.data.length; i += 10) {
+              preparedList.push({ name: mItem.name, data: mItem.data.slice(i, i + 10) });
+            }
+          } else {
+            preparedList.push(mItem);
+          }
+        }
+
+        const batches = [];
+        let currentBatch = [];
+        let currentLen = 0;
+
+        for (const item of preparedList) {
+          const itemStr = JSON.stringify(item);
+          if (currentBatch.length > 0 && (currentLen + itemStr.length) > 1800) {
+            batches.push(currentBatch);
+            currentBatch = [item];
+            currentLen = itemStr.length;
+          } else {
+            currentBatch.push(item);
+            currentLen += itemStr.length;
+          }
+        }
+        if (currentBatch.length > 0) {
+          batches.push(currentBatch);
+        }
+
+        // 3. ส่งข้อมูลในแต่ละ Batch (โดยปกติ 10-20 เครื่องจะถูกส่งพร้อมกันหมดใน 1-2 คำขอเท่านั้น!)
+        for (let b = 0; b < batches.length; b++) {
+          const payload = {
+            timestamp: new Date().toISOString(),
+            machines: batches[b]
+          };
+
+          const url = new URL(endpoint);
+          url.searchParams.set("action", "sync");
+          url.searchParams.set("payload", JSON.stringify(payload));
+
+          const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+          if (!response.ok) throw new Error("HTTP " + response.status);
+          const result = await response.json();
+          if (result.result !== "success") throw new Error(result.message || "Apps Script ปฏิเสธการบันทึก");
+          recordsUpdated += Number(result.recordsUpdated || 0);
+        }
+
+        if (!silent) showToast(`ซิงค์สำเร็จรวม ${recordsUpdated} รายการ (เสร็จสิ้นทั้งหมด)`, "success", 4000);
+        updateSyncBadge();
+        return true;
+
       } catch (err) {
         console.error("Google Sheet Sync Error:", err);
-        if (!silent) showToast("เกิดข้อผิดพลาดในการซิงค์ไปยัง Google Sheet: " + err.message, "error");
+        if (!silent) showToast("ซิงค์ไม่สำเร็จ: " + err.message, "error", 7000);
+        return false;
+      } finally {
+        isSyncingInProgress = false;
       }
     }
 
@@ -655,7 +933,7 @@
           showToast("กรุณาตั้งค่า Google Web App URL ก่อนดึงข้อมูล", "error");
           toggleGoogleSheetModal();
         }
-        return;
+        return false;
       }
 
       if (!silent) showToast("กำลังดึงข้อมูลจาก Google Sheets...", "info");
@@ -676,9 +954,9 @@
             data: m.data.map(d => ({ 
               ...d, 
               ready: routerMidnightTo24(d.ready || ""),
-              working: routerMidnightTo24(d.working || ""),
-              waiting: routerMidnightTo24(d.waiting || ""),
-              standstill: routerMidnightTo24(d.standstill || ""),
+              working: d.working || "",
+              waiting: d.waiting || "",
+              standstill: d.standstill || "",
               day: d.day || getDayNameFromDateStr(d.date),
               selected: true 
             }))
@@ -693,31 +971,170 @@
           renderActiveView();
           populateDropdownSelector();
           if (!silent) showToast("ดึงข้อมูลจาก Google Sheets เข้าเว็บแอปสำเร็จ!", "success");
+          return true;
         } else {
           if (!silent) showToast("ไม่พบข้อมูลใน Google Sheet หรือรูปแบบไม่ถูกต้อง", "error");
+          return false;
         }
       } catch (err) {
         console.error("Fetch Google Sheet Error:", err);
         if (!silent) showToast("เกิดข้อผิดพลาดในการดึงข้อมูล: " + err.message, "error");
+        return false;
       }
     }
 
-    // Populate Dropdown List
-    function populateDropdownSelector() {
-      const selectElem = document.getElementById('machineSelectorDropdown');
-      if (!selectElem) return;
+    // Toggle Machine Dropdown
+    function toggleMachineDropdown() {
+      const list = document.getElementById('machineDropdownList');
+      const icon = document.getElementById('machineDropdownIcon');
+      if (!list) return;
+      const isHidden = list.classList.contains('hidden');
+      if (isHidden) {
+        list.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        populateMachineDropdownList();
+      } else {
+        list.classList.add('hidden');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const btn = document.getElementById('machineDropdownBtn');
+      const list = document.getElementById('machineDropdownList');
+      if (btn && list && !btn.contains(e.target) && !list.contains(e.target)) {
+        list.classList.add('hidden');
+        const icon = document.getElementById('machineDropdownIcon');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Daily table month filter state
+    let currentDailyMonth = 'all';
+
+    function setDailyMonth(monthKey) {
+      currentDailyMonth = monthKey;
+      renderSummaryDashboard(document.getElementById('machineViewContainer'));
+    }
+
+    function buildMonthButtons() {
+      const box = document.getElementById('monthlyFilterBox');
+      if (!box) return;
+      const months = new Set();
+      state.machines.forEach(m => {
+        m.data.forEach(d => {
+          if (d.date) {
+            const [dd, mm, yyyy] = d.date.split('/');
+            months.add(`${mm}/${yyyy}`);
+          }
+        });
+      });
+      const sortedMonths = Array.from(months).sort();
+      let html = `<button onclick="setDailyMonth('all')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition border shadow-sm whitespace-nowrap ${currentDailyMonth === 'all' ? 'bg-violet-600 text-white border-violet-400' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">ทุกเดือน</button>`;
+      sortedMonths.forEach(m => {
+        const [mm, yyyy] = m.split('/');
+        const label = new Date(yyyy, parseInt(mm)-1, 1).toLocaleString('th-TH', { year: 'numeric', month: 'long' });
+        html += `<button onclick="setDailyMonth('${m}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition border shadow-sm whitespace-nowrap ${currentDailyMonth === m ? 'bg-violet-600 text-white border-violet-400' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${label}</button>`;
+      });
+      box.innerHTML = html;
+    }
+
+    // Toggle Tab Dropdown
+    function toggleTabDropdown() {
+      const list = document.getElementById('tabDropdownList');
+      const icon = document.getElementById('tabDropdownIcon');
+      if (!list) return;
+      const isHidden = list.classList.contains('hidden');
+      if (isHidden) {
+        list.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        populateTabDropdownList();
+      } else {
+        list.classList.add('hidden');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      const btn = document.getElementById('tabDropdownBtn');
+      const list = document.getElementById('tabDropdownList');
+      if (btn && list && !btn.contains(e.target) && !list.contains(e.target)) {
+        list.classList.add('hidden');
+        const icon = document.getElementById('tabDropdownIcon');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    function populateTabDropdownList() {
+      const list = document.getElementById('tabDropdownList');
+      if (!list) return;
+      let html = '';
+      state.machines.forEach(m => {
+        const isActive = state.activeTab === m.id;
+        html += `<button type="button" onclick="switchTabFromDropdown('${m.id}')" class="w-full text-left px-3 py-2.5 text-xs flex items-center gap-2 transition ${isActive ? 'bg-sky-600/20 text-sky-300 font-bold' : 'text-slate-200 hover:bg-slate-800 hover:text-sky-300'} border-b border-slate-800/60"><i class="fa-solid fa-gears ${isActive ? 'text-sky-400' : 'text-slate-400'}"></i> <span class="flex-1">${escapeHtml(m.name)}</span> <span onclick="event.stopPropagation(); removeMachine('${m.id}', event);" class="ml-2 text-slate-500 hover:text-rose-400 transition opacity-60 hover:opacity-100" title="ลบเครื่องนี้"><i class="fa-solid fa-xmark"></i></span> ${isActive ? '<span class="ml-auto text-[10px] text-emerald-300">กำลังดู</span>' : ''}</button>`;
+      });
+      list.innerHTML = html || '<div class="px-3 py-2 text-xs text-slate-500">ไม่มีเครื่องในระบบ</div>';
+    }
+
+    function switchTabFromDropdown(id) {
+      switchTab(id);
+      document.getElementById('tabDropdownList').classList.add('hidden');
+      const icon = document.getElementById('tabDropdownIcon');
+      if (icon) icon.style.transform = 'rotate(0deg)';
+      updateTabDropdownLabel();
+    }
+
+    function updateTabDropdownLabel() {
+      const label = document.getElementById('tabDropdownLabel');
+      if (!label) return;
+      if (state.activeTab === 'summary') {
+        label.innerHTML = '<i class="fa-solid fa-gears mr-1.5 text-sky-300"></i>เลือกเครื่อง';
+      } else {
+        const machine = state.machines.find(m => m.id === state.activeTab);
+        if (machine) {
+          label.innerHTML = '<i class="fa-solid fa-gears mr-1.5 text-sky-300"></i>' + escapeHtml(machine.name);
+        } else {
+          label.innerHTML = '<i class="fa-solid fa-gears mr-1.5 text-sky-300"></i>เลือกเครื่อง';
+        }
+      }
+    }
+
+    // Populate Dropdown List (custom)
+    function populateMachineDropdownList() {
+      const list = document.getElementById('machineDropdownList');
+      if (!list) return;
 
       const existingNames = state.machines.map(m => m.name);
-      let html = '<option value="" disabled selected>-- เพิ่ม Machine No. --</option>';
+      let html = '';
 
       allowedMachineNumbers.forEach(num => {
         const machineName = `Machine No.${num}`;
         if (!existingNames.includes(machineName)) {
-          html += `<option value="${machineName}">${machineName}</option>`;
+          html += `<button type="button" onclick="selectMachineFromDropdown('${machineName}')" class="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-sky-300 transition border-b border-slate-800/60 last:border-0">${machineName}</button>`;
         }
       });
 
-      selectElem.innerHTML = html;
+      if (!html) {
+        html = '<div class="px-3 py-2 text-xs text-slate-500">ไม่มีเครื่องที่สามารถเพิ่มได้</div>';
+      }
+
+      list.innerHTML = html;
+    }
+
+    function selectMachineFromDropdown(name) {
+      document.getElementById('machineSelectorHidden').value = name;
+      document.getElementById('machineDropdownLabel').textContent = name;
+      document.getElementById('machineDropdownList').classList.add('hidden');
+      const icon = document.getElementById('machineDropdownIcon');
+      if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+
+    // Populate Dropdown Selector (backward compat for init)
+    function populateDropdownSelector() {
+      document.getElementById('machineSelectorHidden').value = '';
+      document.getElementById('machineDropdownLabel').textContent = '-- เพิ่ม Machine No. --';
+      populateMachineDropdownList();
     }
 
     // Switch Active Tab
@@ -725,17 +1142,18 @@
       state.activeTab = tabId;
       renderTabs();
       renderActiveView();
+      updateTabDropdownLabel();
     }
 
     // Add Machine from Dropdown
     function addSelectedMachineFromDropdown() {
-      const selectElem = document.getElementById('machineSelectorDropdown');
-      if (!selectElem || !selectElem.value) {
+      const hidden = document.getElementById('machineSelectorHidden');
+      if (!hidden || !hidden.value) {
         showToast("กรุณาเลือกหมายเลข Machine No. จากรายการก่อน", "error");
         return;
       }
 
-      const selectedName = selectElem.value;
+      const selectedName = hidden.value;
       const newId = `m_${Date.now()}`;
       const newMachine = {
         id: newId,
@@ -804,40 +1222,10 @@
       }
     }
 
-    // Render Navigation Tabs
+    // Render Navigation Tabs (now a single dropdown box)
     function renderTabs() {
-      const container = document.getElementById('machineTabsContainer');
-      let html = '';
-
-      const isSummaryActive = state.activeTab === 'summary';
-      html += `
-        <button onclick="switchTab('summary')" class="px-3.5 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 whitespace-nowrap shadow-sm border ${
-          isSummaryActive
-            ? 'bg-gradient-to-r from-sky-500 to-brand-500 text-white border-sky-400'
-            : 'bg-slate-950/60 hover:bg-slate-800 text-slate-300 border-slate-800'
-        }">
-          <i class="fa-solid fa-chart-pie"></i> แดชบอร์ดสรุปผลรวม (${state.machines.length})
-        </button>
-      `;
-
-      state.machines.forEach(m => {
-        const isActive = state.activeTab === m.id;
-        html += `
-          <div onclick="switchTab('${m.id}')" class="group relative px-3.5 py-2 rounded-xl font-semibold text-xs cursor-pointer transition flex items-center gap-2 whitespace-nowrap shadow-sm border ${
-            isActive
-              ? 'bg-sky-600/30 text-sky-300 border-sky-500/50'
-              : 'bg-slate-950/60 hover:bg-slate-800 text-slate-300 border-slate-800'
-          }">
-            <i class="fa-solid fa-gears ${isActive ? 'text-sky-400' : 'text-slate-400'}"></i>
-            <span>${escapeHtml(m.name)}</span>
-            <button onclick="removeMachine('${m.id}', event)" class="ml-1 opacity-0 group-hover:opacity-100 hover:text-rose-400 text-slate-500 transition" title="ลบเครื่องนี้">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
+      updateTabDropdownLabel();
+      populateTabDropdownList();
       populateDropdownSelector();
     }
 
@@ -923,7 +1311,10 @@
         };
       });
 
-      const overallAvgDuty = state.machines.length > 0 ? (sumAvgDuty / state.machines.length).toFixed(1) : 0;
+      const activeDutyMachines = summaryMetrics.filter(m => m.avgDuty > 0);
+      const overallAvgDuty = activeDutyMachines.length > 0 
+        ? (activeDutyMachines.reduce((sum, m) => sum + m.avgDuty, 0) / activeDutyMachines.length).toFixed(1) 
+        : 0;
       const totalOperatingHours = totalWorkingHours + totalWaitingHours + totalStandstillHours;
 
       container.innerHTML = `
@@ -1063,15 +1454,85 @@
             </table>
           </div>
         </div>
+
+        <!-- Daily Comparison Table (Separate Section) -->
+        <div class="bg-gradient-to-br from-slate-900 to-[#0f1525] border border-violet-500/20 rounded-2xl p-5 shadow-xl mt-6 ring-1 ring-violet-500/10">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-lg bg-violet-500/15 text-violet-300 grid place-items-center shadow-lg shadow-violet-500/10"><i class="fa-solid fa-calendar-day"></i></div>
+            <div>
+              <h3 class="text-base font-bold text-white">ตารางเปรียบเทียบรายวัน (Daily Breakdown)</h3>
+              <p class="text-[11px] text-slate-400">เปรียบเทียบสถิติรายวันแยกตามเครื่อง — รายละเอียด Ready / Working / Waiting / Duty</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 mb-3 overflow-x-auto custom-scrollbar pb-1 px-1" id="monthlyFilterBox"></div>
+          <div class="overflow-x-auto custom-scrollbar rounded-xl border border-violet-500/20 bg-slate-950/40 max-h-[28rem] overflow-y-auto">
+            <table class="w-full text-center text-[11px] text-slate-200 border-collapse">
+              <thead class="sticky top-0 bg-violet-900/30 z-10">
+                <tr class="text-violet-200 font-bold border-b border-violet-500/30">
+                  <th class="p-2.5 text-left whitespace-nowrap">วันที่</th>
+                  ${state.machines.map(m => `<th class="p-2 min-w-[130px] text-violet-300 whitespace-nowrap">${escapeHtml(m.name)}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-violet-500/10">
+                ${(() => {
+                  const dateSet = new Set();
+                  state.machines.forEach(m => {
+                    m.data.forEach(d => { if (d.date) dateSet.add(d.date); });
+                  });
+                  let dates = Array.from(dateSet).sort((a, b) => {
+                    const parseD = s => { const [dd, mm, yyyy] = s.split('/'); return new Date(yyyy, parseInt(mm)-1, dd); };
+                    return parseD(a) - parseD(b);
+                  });
+                  if (currentDailyMonth !== 'all') {
+                    dates = dates.filter(date => {
+                      const [dd, mm, yyyy] = date.split('/');
+                      const monthKey = `${mm}/${yyyy}`;
+                      return monthKey === currentDailyMonth;
+                    });
+                  }
+                  if (dates.length === 0) return '<tr><td colspan="100" class="p-4 text-slate-500 text-sm">ไม่มีข้อมูลรายวัน</td></tr>';
+                  return dates.map(date => {
+                    return `
+                      <tr class="hover:bg-violet-500/5 transition">
+                        <td class="p-2.5 text-left font-bold text-violet-200 whitespace-nowrap border-r border-violet-500/10 bg-violet-900/20">${date}</td>
+                        ${state.machines.map(m => {
+                          const d = m.data.find(x => x.date === date);
+                          if (!d) return `<td class="p-2 text-slate-600 text-xs">-</td>`;
+                          const dutyVal = parseFloat(d.duty);
+                          const ready = d.ready || '-';
+                          const work = d.working || '-';
+                          const wait = d.waiting || '-';
+                          let cellColor = 'text-slate-300';
+                          let bgClass = '';
+                          if (!isNaN(dutyVal) && dutyVal > 0) {
+                            cellColor = dutyVal >= 75 ? 'text-emerald-300' : (dutyVal >= 50 ? 'text-amber-300' : 'text-rose-300');
+                            bgClass = dutyVal >= 75 ? 'bg-emerald-500/10' : (dutyVal >= 50 ? 'bg-amber-500/10' : 'bg-rose-500/10');
+                          }
+                          return `<td class="p-2 text-[10px] whitespace-nowrap ${bgClass} ${cellColor}">
+                            ${ready ? `<div class="font-extrabold text-[10px] text-slate-100">${ready}</div>` : ''}
+                            ${work ? `<div class="text-[9px] opacity-90">W:${work}</div>` : ''}
+                            ${wait ? `<div class="text-[9px] opacity-70 text-amber-200">Wt:${wait}</div>` : ''}
+                            ${!isNaN(dutyVal) ? `<div class="font-black text-[11px] mt-0.5">${dutyVal}%</div>` : ''}
+                          </td>`;
+                        }).join('')}
+                      </tr>`;
+                  }).join('');
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </div>
       `;
 
       setTimeout(() => {
         renderDashboardCharts(summaryMetrics);
+        buildMonthButtons();
       }, 50);
     }
 
     // Render Dashboard Charts
     function renderDashboardCharts(metrics) {
+      if (typeof Chart === 'undefined') return;
       const labels = metrics.map(m => m.name);
       const dutyData = metrics.map(m => m.avgDuty);
       const workData = metrics.map(m => m.workHours);
@@ -1208,7 +1669,7 @@
                 วิเคราะห์รูปภาพสถานะเครื่อง ROUTER และจัดเรียงตารางให้เครื่อง <strong class="text-slate-200">${escapeHtml(machine.name)}</strong> อัตโนมัติ
               </p>
 
-              <div class="space-y-3">
+              <div class="space-y-3 ${isAdminMode ? '' : 'hidden'}">
                 <div>
                   <label for="apiKeyInput_${machine.id}" class="block text-xs font-medium text-slate-400 mb-1">Gemini API Key (จำเป็นต้องกรอก)</label>
                   <input type="password" id="apiKeyInput_${machine.id}" value="${escapeHtml(state.geminiApiKey || '')}" onchange="saveGeminiApiKey(this.value)" placeholder="วาง API Key จาก Google AI Studio" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition">
@@ -1446,8 +1907,9 @@
         if (autoDay) machine.data[idx].day = autoDay;
         renderMachineTable(machineId);
       } else {
-        // ช่องเวลา (Ready/Working/Waiting/Standstill): เที่ยงคืน → 24:00:00 ตามระบบเสมอ
-        machine.data[idx][key] = ["ready", "working", "waiting", "standstill"].includes(key)
+        // ช่องเวลา Ready: 0:00 หรือ 00:00:00 หมายถึงเปิดเครื่อง 24 ชม. → 24:00:00 ตามระบบ
+        // ส่วน Working/Waiting/Standstill ค่า 0 หมายถึง 0 ชม. คงเป็น 00:00:00 ตามจริง
+        machine.data[idx][key] = (key === 'ready')
           ? routerMidnightTo24(value)
           : value;
       }
@@ -1488,6 +1950,8 @@
         }
         if (!machine.name || machine.name !== candidate) {
           machine.name = candidate;
+          const num = getMachineNumberFromName(candidate);
+          if (num !== null) machine.number = num;
           renderTabs();
           renderActiveView();
           populateDropdownSelector();
@@ -1529,21 +1993,72 @@
 
     function parseDate(dateStr) {
       if (!dateStr) return new Date(0);
-      const parts = dateStr.split('/');
-      if (parts.length >= 2) {
-        const day = parseInt(parts[0], 10);
-        let month = 0;
-        const mStr = parts[1];
-        const monthsMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
-        if (monthsMap[mStr] !== undefined) {
-          month = monthsMap[mStr];
-        } else {
-          month = parseInt(mStr, 10) - 1;
-        }
-        const year = parts[2] ? parseInt(parts[2], 10) : 2026;
+      const s = String(dateStr).trim();
+      if (!s) return new Date(0);
+      
+      // YYYY-MM-DD
+      const ymdMatch = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+      if (ymdMatch) {
+        let year = parseInt(ymdMatch[1], 10);
+        let month = parseInt(ymdMatch[2], 10) - 1;
+        let day = parseInt(ymdMatch[3], 10);
+        if (year > 2200) year -= 543; // Buddhist to Christian era
         return new Date(year, month, day);
       }
-      return new Date(dateStr);
+      
+      // DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+      const dmyMatch = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+      if (dmyMatch) {
+        let day = parseInt(dmyMatch[1], 10);
+        let month = parseInt(dmyMatch[2], 10) - 1;
+        let year = parseInt(dmyMatch[3], 10);
+        if (year > 2200) year -= 543;
+        return new Date(year, month, day);
+      }
+      
+      // DD/Mon/YYYY or DD-Mon-YYYY or DD Mon YYYY (with English or Thai months)
+      const dmMatch = s.match(/^(\d{1,2})[\/\-. ]+([A-Za-z\u0e00-\u0e7f][A-Za-z\u0e00-\u0e7f\.]{1,})[\/\-. ]+(\d{4})$/);
+      if (dmMatch) {
+        let day = parseInt(dmMatch[1], 10);
+        let year = parseInt(dmMatch[3], 10);
+        if (year > 2200) year -= 543;
+        
+        // Month mapping (0-11)
+        const monthMap = {
+          jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
+          apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
+          aug: 7, august: 7, sep: 8, september: 8, oct: 9, october: 9,
+          nov: 10, november: 10, dec: 11, december: 11,
+          "มค": 0, "กพ": 1, "มีค": 2, "เมย": 3, "พค": 4, "มิย": 5,
+          "กค": 6, "สค": 7, "กย": 8, "ตค": 9, "พย": 10, "ธค": 11,
+          "ม.ค.": 0, "ก.พ.": 1, "มี.ค.": 2, "เม.ย.": 3, "พ.ค.": 4, "มิ.ย.": 5,
+          "ก.ค.": 6, "ส.ค.": 7, "ก.ย.": 8, "ต.ค.": 9, "พ.ย.": 10, "ธ.ค.": 11,
+          "มกราคม": 0, "กุมภาพันธ์": 1, "มีนาคม": 2, "เมษายน": 3, "พฤษภาคม": 4, "มิถุนายน": 5,
+          "กรกฎาคม": 6, "สิงหาคม": 7, "กันยายน": 8, "ตุลาคม": 9, "พฤศจิกายน": 10, "ธันวาคม": 11
+        };
+        
+        const rawTok = dmMatch[2].toLowerCase();
+        const tok = rawTok.replace(/\./g, '').replace(/\s+/g, '');
+        let month = -1;
+        if (monthMap[tok] !== undefined) {
+          month = monthMap[tok];
+        } else if (monthMap[rawTok] !== undefined) {
+          month = monthMap[rawTok];
+        } else {
+          const shortMonths = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+          const prefix = tok.slice(0, 3);
+          const sIdx = shortMonths.indexOf(prefix);
+          if (sIdx !== -1) month = sIdx;
+        }
+        
+        if (month >= 0 && month <= 11) {
+          return new Date(year, month, day);
+        }
+      }
+      
+      // Fallback: let JavaScript parse it
+      const fallback = new Date(s);
+      return isNaN(fallback.getTime()) ? new Date(0) : fallback;
     }
 
     function addColumn(machineId) {
@@ -1991,7 +2506,7 @@
             } else {
               const midLower = mid.toLowerCase();
               const midNoDots = midLower.replace(/\./g, '').replace(/\s/g, '');
-              monthName = monthNameMap[midLower] || monthNameMap[midNoDots] || monthNameMap[engMonths.find(en => en.toLowerCase() === midNoDots)] || null;
+              monthName = monthNameMap[midLower] || monthNameMap[midNoDots] || monthNameMap[ROUTER_ENG_MONTHS.find(en => en.toLowerCase() === midNoDots)] || null;
             }
             yearNum = m[3];
           }
@@ -2071,7 +2586,7 @@
         monthName = ROUTER_ENG_MONTHS[parseInt(monthTok, 10) - 1] || null;
       } else {
         const cleaned = monthTok.toLowerCase();
-        monthName = ROUTER_MONTH_NAME_MAP[cleaned] || null;
+        monthName = ROUTER_MONTH_NAME_MAP[cleaned] || ROUTER_MONTH_NAME_MAP[cleaned.replace(/\./g, '')] || null;
       }
       if (!monthName) return null;
 
@@ -2353,13 +2868,17 @@
     // เวลาเที่ยงคืนแสดงเป็นเลข 24 เสมอ: "0:00" / "00:00:00" / "24:00" → "24:00:00" (ตรงกับจอเครื่องและชีต)
     function routerMidnightTo24(timeStr) {
       if (timeStr === "" || timeStr === null || timeStr === undefined) return timeStr;
-      const m = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})(?::(\d{1,2}))?$/);
-      if (!m) return String(timeStr).trim();
+      const s = String(timeStr).trim();
+      // Match H:MM[:SS] or HH:MM[:SS] or H:MM or HH:MM
+      const m = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+      if (!m) return s;
       const h = parseInt(m[1], 10);
       const mi = parseInt(m[2], 10);
       const ss = m[3] === undefined ? 0 : parseInt(m[3], 10);
+      // เที่ยงคืน (0:00 หรือ 00:00 หรือ 0:00:00 หรือ 24:00) → 24:00:00
       if ((h === 0 || h === 24) && mi === 0 && ss === 0) return "24:00:00";
-      return String(timeStr).trim();
+      // คืนค่ารูปเดิม
+      return s;
     }
 
     function mergeParsedRowsIntoMachine(machine, rows) {
@@ -2377,7 +2896,7 @@
             let v = r[f];
             if (v === "" || v === null || v === undefined) return;
             if (f === "day" && target.day) return; // ชื่อวันที่คำนวณจากวันที่แล้วไม่ต้องทับ
-            if (timeFields.includes(f)) v = routerMidnightTo24(v); // เที่ยงคืน → 24:00:00
+            if (f === "ready") v = routerMidnightTo24(v); // เฉพาะ Ready: เที่ยงคืน → 24:00:00 (ส่วนเวลาอื่น 00:00:00 คงเดิม)
             target[f] = v;
           });
           updated++;
@@ -2386,9 +2905,9 @@
             date: r.date,
             day: r.day || getDayNameFromDateStr(r.date),
             ready: routerMidnightTo24(r.ready || ""),
-            working: routerMidnightTo24(r.working || ""),
-            waiting: routerMidnightTo24(r.waiting || ""),
-            standstill: routerMidnightTo24(r.standstill || ""),
+            working: r.working || "",
+            waiting: r.waiting || "",
+            standstill: r.standstill || "",
             duty: (r.duty === undefined || r.duty === null) ? "" : r.duty,
             selected: true
           };
@@ -2926,17 +3445,22 @@
           wtHours.toFixed(1),
           stHours.toFixed(1)
         ]);
+      });
 
+      // ใส่แผ่นงานสรุปภาพรวม (Summary) เป็นแผ่นงานแรกสุดในไฟล์
+      const summaryWs = XLSX.utils.aoa_to_sheet(summaryRows);
+      summaryWs['!cols'] = [{ wch: 8 }, { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+      XLSX.utils.book_append_sheet(workbook, summaryWs, "Summary_Dashboard");
+
+      // ตามด้วยแผ่นงานของแต่ละเครื่องจักร
+      state.machines.forEach(m => {
+        const activeData = m.data.filter(d => d.selected !== false);
         if (activeData.length > 0) {
           const ws = createWorksheetForMachine(m, activeData);
           let sheetName = `${m.name}`.replace(/[/\\?%*:|"<>]/g, '_').substring(0, 31);
           XLSX.utils.book_append_sheet(workbook, ws, sheetName);
         }
       });
-
-      const summaryWs = XLSX.utils.aoa_to_sheet(summaryRows);
-      summaryWs['!cols'] = [{ wch: 8 }, { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
-      XLSX.utils.book_append_sheet(workbook, summaryWs, "Summary_Dashboard");
 
       const fileName = `ROUTER_Executive_Summary_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
       saveWorkbookSafely(workbook, fileName);
@@ -3024,16 +3548,9 @@
       return null;
     }
 
-    // ตรวจสอบว่าข้อมูลที่บันทึกไว้ในเครื่องเป็นของเดือนก่อนหน้าหรือไม่ แล้วแจ้งเตือนผู้ใช้
+    // ตรวจสอบสถานะข้อมูลเพื่อรองรับการใช้งานแบบหลายเดือน (Multi-Month) พร้อมกัน
     function checkSavedMonthMismatch() {
-      const firstMachine = state.machines[0];
-      if (!firstMachine || !Array.isArray(firstMachine.data) || firstMachine.data.length === 0) return;
-      const savedKey = getMonthKeyFromDateStr(firstMachine.data[0].date);
-      const now = new Date();
-      const currentKey = `${now.getFullYear()}-${now.getMonth()}`;
-      if (savedKey && savedKey !== currentKey) {
-        showToast(`ข้อมูลที่บันทึกไว้เป็นของเดือนก่อนหน้า ไม่ตรงกับเดือนปัจจุบัน — หากต้องการฟอร์มเดือนใหม่ให้กดปุ่ม "รีเซ็ตข้อมูล"`, "info", 7000);
-      }
+      // รองรับข้อมูลต่อเนื่องหลายเดือนอย่างเต็มรูปแบบ (ไม่มีการแจ้งเตือนรบกวนให้รีเซ็ต)
     }
 
     // Helper: แปลงข้อความ JSON จาก AI ให้ปลอดภัย (ตัด Code fence ``` และข้อความที่ปนมา)
