@@ -1414,7 +1414,7 @@
             <table class="w-full text-center text-xs text-slate-200 border-collapse">
               <thead class="sticky top-0 z-20">
                 <tr class="bg-slate-800 text-slate-300 font-semibold border-b border-slate-700">
-                  <th class="p-3 text-center">ชื่อเครื่องจักร (M/C Name)</th>
+                  <th class="p-3 text-center sticky left-0 z-20 bg-slate-800 shadow-[2px_0_5px_rgba(0,0,0,0.5)]">ชื่อเครื่องจักร (M/C Name)</th>
                   <th class="p-3">จำนวนวันในรายงาน</th>
                   <th class="p-3 text-emerald-400 font-bold">Duty เฉลี่ย (%)</th>
                   <th class="p-3 text-sky-400">Working รวม (ชม.)</th>
@@ -1427,7 +1427,7 @@
               <tbody class="divide-y divide-slate-800/50">
                 ${summaryMetrics.map(m => `
                   <tr class="hover:bg-slate-800/40 transition">
-                    <td class="p-3 font-semibold text-slate-300">
+                    <td class="p-3 font-semibold text-slate-300 sticky left-0 z-10 bg-slate-900 shadow-[4px_0_10px_rgba(0,0,0,0.6)] whitespace-nowrap">
                       <span class="inline-flex items-center justify-center gap-2 align-middle">
                         <span class="w-2 h-2 rounded-full shrink-0 ${m.avgDuty >= 75 ? 'bg-emerald-400' : 'bg-amber-400'}"></span>
                         <span>${escapeHtml(m.name)}</span>
@@ -1469,7 +1469,7 @@
             <table class="w-full text-center text-[11px] text-slate-200 border-collapse">
               <thead class="sticky top-0 bg-violet-900 z-10">
                 <tr class="text-violet-200 font-bold border-b border-violet-500/30">
-                  <th class="p-2.5 text-left whitespace-nowrap">วันที่</th>
+                  <th class="p-2.5 text-left whitespace-nowrap sticky left-0 z-20 bg-violet-900 shadow-[2px_0_5px_rgba(0,0,0,0.5)]">วันที่</th>
                   ${state.machines.map(m => `<th class="p-2 min-w-[130px] text-violet-300 whitespace-nowrap">${escapeHtml(m.name)}</th>`).join('')}
                 </tr>
               </thead>
@@ -1494,7 +1494,7 @@
                   return dates.map(date => {
                     return `
                       <tr class="hover:bg-violet-500/5 transition">
-                        <td class="p-2.5 text-left font-bold text-violet-200 whitespace-nowrap border-r border-violet-500/10 bg-violet-900/20">${date}</td>
+                        <td class="p-2.5 text-left font-bold text-violet-200 whitespace-nowrap border-r border-violet-500/10 bg-violet-900/20 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.5)]">${date}</td>
                         ${state.machines.map(m => {
                           const d = m.data.find(x => x.date === date);
                           if (!d) return `<td class="p-2 text-slate-600 text-xs">-</td>`;
