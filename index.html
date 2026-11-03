@@ -2604,6 +2604,44 @@
       return `${("0" + d.getDate()).slice(-2)}/${ROUTER_ENG_MONTHS[d.getMonth()]}/${d.getFullYear()}`;
     }
 
+
+    // ปรับวันที่หัวบล็อกจาก weekday ที่ OCR อ่านได้ เพื่อกัน OCR อ่านเลขวันที่คลาด 1 วัน
+    // ในหน้าจอ CNC วันที่ด้านบนอยู่เหนือ Today; ลำดับ Today/Yesterday/ชื่อวัน
+    // ใช้ตรวจสอบ weekday ของ anchor ก่อนนำไปผูกกับคอลัมน์
+    function routerCorrectAnchorFromHeader(anchor, tokens) {
+      if (!anchor || !Array.isArray(tokens) || !tokens.length) return anchor;
+      const hasToday = tokens.includes("today");
+      const hasYesterday = tokens.includes("yesterday");
+      const baseOffset = hasToday ? 0 : (hasYesterday ? 1 : 0);
+      const candidates = [];
+      tokens.forEach((token, index) => {
+        const wd = ROUTER_DAY_TOKENS[token];
+        if (wd === undefined || token === "today" || token === "yesterday") return;
+        const offset = baseOffset + index;
+        candidates.push((wd + offset) % 7);
+      });
+      if (!candidates.length) return anchor;
+      // ใช้ weekday ที่สอดคล้องกันจากชื่อวันหลายคอลัมน์ (เช่น Sunday/Saturday/Friday)
+      const counts = new Map();
+      candidates.forEach(wd => counts.set(wd, (counts.get(wd) || 0) + 1));
+      const expectedWeekday = [...counts.entries()].sort((a,b) => b[1]-a[1])[0][0];
+      const d = new Date(Number(anchor.yearNum), ROUTER_ENG_MONTHS.indexOf(anchor.monthName), Number(anchor.dayNum));
+      if (d.getDay() === expectedWeekday) return anchor;
+      // ยอมแก้เฉพาะคลาดเคลื่อน ±1 วัน ซึ่งเป็นรูปแบบ OCR สับสนเลขวันที่ที่พบได้บ่อย
+      for (const delta of [-1, 1]) {
+        const candidate = new Date(d);
+        candidate.setDate(candidate.getDate() + delta);
+        if (candidate.getDay() === expectedWeekday) {
+          return {
+            dayNum: ("0" + candidate.getDate()).slice(-2),
+            monthName: ROUTER_ENG_MONTHS[candidate.getMonth()],
+            yearNum: String(candidate.getFullYear())
+          };
+        }
+      }
+      return anchor;
+    }
+
     // คำนวณวันที่ของแต่ละคอลัมน์จากชื่อหัวคอลัมน์ (Today/Yesterday/ชื่อวัน)
     // แม่นกว่าการนับถอยหลังตามลำดับคอลัมน์ เพราะถ้า OCR อ่านคอลัมน์ใดตกหล่น คอลัมน์ที่เหลือยังถูกจับคู่วันที่ถูกต้อง
     function routerDateForHeaderToken(anchor, token) {
@@ -2612,7 +2650,9 @@
       const wd = ROUTER_DAY_TOKENS[token];
       if (wd === undefined) return routerAnchorDateToString(anchor, 1);
       const base = new Date(parseInt(anchor.yearNum, 10), ROUTER_ENG_MONTHS.indexOf(anchor.monthName), parseInt(anchor.dayNum, 10));
-      base.setDate(base.getDate() - 1); // คอลัมน์วันต่าง ๆ ถัดจาก Today ย้อนหลังจาก "เมื่อวาน"
+      // วันที่บนหัวตารางอาจอยู่เหนือ weekday ใดก็ได้ ไม่ได้หมายความว่าเป็น Today
+      // ถ้าชื่อวันของคอลัมน์ตรงกับวันที่ anchor ให้ใช้ anchor date โดยตรง
+      // มิฉะนั้นเลือกวันที่ก่อนหน้าใกล้ที่สุดที่ตรงกับ weekday ของหัวคอลัมน์
       for (let k = 0; k < 7; k++) {
         const d = new Date(base);
         d.setDate(d.getDate() - k);
@@ -2655,10 +2695,11 @@
 
         const headerHasSinceReset = /since\s*reset/i.test(lines[headerIdx]);
         const dayTokens = extractRouterDayTokens(lines[headerIdx]);
+        // เมื่อพบหัวคอลัมน์ Today ให้ยึดวันที่หลักเหนือ Today เป็นวันที่จริงเสมอ ห้ามเลื่อน anchor จาก weekday OCR\n        const correctedAnchor = dayTokens.includes("today") ? anchor : routerCorrectAnchorFromHeader(anchor, dayTokens);
         const colCount = dayTokens.length;
         if (colCount >= 2) {
           // วันที่ของแต่ละคอลัมน์คำนวณจากชื่อวันในหัวคอลัมน์ (Today = วันที่หลัก, ถัดไปย้อนตามชื่อวันจริง)
-          const colDates = dayTokens.map(tok => routerDateForHeaderToken(anchor, tok));
+          // Today = anchor date, Yesterday = anchor - 1; weekday columns resolve backward from the same anchor\n          const colDates = dayTokens.map(tok => routerDateForHeaderToken(correctedAnchor, tok));
 
           const rowMap = {};
           colDates.forEach(ds => {
@@ -2674,10 +2715,13 @@
             // แถว Duty % (มี % ติดกันหลายตัว)
             const percents = [...lines[j].matchAll(/(\d{1,3}(?:\.\d+)?)\s*%/g)].map(x => parseFloat(x[1]));
             if (percents.length >= 2) {
-              const start = (/since\s*reset/i.test(lines[j]) || headerHasSinceReset) ? 1 : 0;
-              for (let p = 0; p < percents.length - start && (p + start - (start ? 1 : 0)) < colCount; p++) {
-                const col = p;
-                rowMap[colDates[col]].duty = percents[p + start];
+              // Since reset เป็นคอลัมน์สะสมที่ไม่ใช่วัน:
+              // ข้ามค่าแรกเฉพาะเมื่อ OCR ส่งค่ามาเกินจำนวนคอลัมน์วันจริงเท่านั้น
+              // บางภาพ/OCR อาจไม่อ่านข้อความใน Since reset ทำให้จำนวนเปอร์เซ็นต์
+              // เท่ากับจำนวนวันอยู่แล้ว การข้ามแบบตายตัวจะทำให้ Today เลื่อนไป Yesterday
+              const dutyOffset = headerHasSinceReset && percents.length > colCount ? 1 : 0;
+              for (let p = 0; p < colCount && (p + dutyOffset) < percents.length; p++) {
+                rowMap[colDates[p]].duty = percents[p + dutyOffset];
               }
               j++;
               break;
@@ -2696,11 +2740,14 @@
             }
             autoMetricIdx = metricKeys.indexOf(metric) + 1;
 
-            // คอลัมน์แรก (Since reset) ข้าม ถ้าหัวตารางมีคอลัมน์นั้น
-            const skipFirst = headerHasSinceReset;
-            for (let t = 0; t < times.length; t++) {
-              const col = t - (skipFirst ? 1 : 0);
-              if (col < 0 || col >= colCount) continue;
+            // ข้าม Since reset เฉพาะเมื่อพบค่ามากกว่าจำนวนคอลัมน์วัน
+            // หาก OCR อ่าน Since reset ตกหล่น จำนวนเวลาจะเท่ากับ colCount
+            // จึงต้องเริ่มจับคู่ค่าตัวแรกกับ Today/คอลัมน์วันแรกทันที
+            const firstTimeHours = times.length ? parseInt(String(times[0]).split(":")[0], 10) : 0;
+            const firstValueLooksAccumulated = Number.isFinite(firstTimeHours) && firstTimeHours > 24;
+            const timeOffset = headerHasSinceReset && (times.length > colCount || firstValueLooksAccumulated) ? 1 : 0;
+            for (let t = timeOffset; t < times.length && (t - timeOffset) < colCount; t++) {
+              const col = t - timeOffset;
               rowMap[colDates[col]][metric] = times[t];
             }
           }
@@ -2808,8 +2855,10 @@
           return bestDist <= tol ? best : null;
         };
 
+        // ตรวจสอบ anchor ด้วยลำดับ weekday ที่อ่านได้ ก่อนจับคู่วันที่กับคอลัมน์
+        // เมื่อพบ Today ให้ยึดวันที่หลักเหนือ Today โดยตรง เพื่อไม่ให้ OCR weekday ทำให้ข้อมูลเลื่อนไปวันถัดไป/ก่อนหน้า\n        const correctedAnchor = colDefs.some(c => c.token === "today") ? anchor : routerCorrectAnchorFromHeader(anchor, colDefs.map(c => c.token));
         // วันที่ของแต่ละคอลัมน์จากชื่อวันในหัวตาราง
-        const colDates = colDefs.map(c => routerDateForHeaderToken(anchor, c.token));
+        // Today = anchor date, Yesterday = anchor - 1; weekday columns resolve backward from the same anchor\n        const colDates = colDefs.map(c => routerDateForHeaderToken(correctedAnchor, c.token));
         const rowMap = {};
         colDates.forEach(ds => {
           rowMap[ds] = { date: ds, day: getDayNameFromDateStr(ds), ready: "", working: "", waiting: "", standstill: "", duty: "", selected: true };
@@ -3572,8 +3621,8 @@
       // พรอมต์ตามไฟล์ตัวอย่างที่อ่านค่าได้แม่น: ถามตามป้ายจริงบนจอเครื่อง (แถว 48/25/15/12/%) แล้วแปลกลับเป็น key เดิมเอง
       // (48 = Ready for operation, 25 = Operational mode working, 15 = Operational mode waiting, 12 = Standstill due to error/stop, % = Duty)
       const promptText = `Analyze these ROUTER machine history screen image(s). Each screen shows a horizontal history table: date columns (Today, Yesterday, and weekday names going right = older) and rows labeled 48, 25, 15, 12, and %.
-Read: (1) the anchor date text near the top (e.g. "29. October 2026" or similar), (2) the day-column headers, (3) for EACH date column the 4 time values in rows 48, 25, 15, 12 and the duty percentage from row %.
-Compute each column's calendar date by going back one day per column: Today = anchor date, Yesterday = anchor date minus 1, next weekday names continue backwards (weekdays wrap through weekends).
+Read: (1) the anchor date text near the top (e.g. "27. October 2026"), (2) the day-column headers and their horizontal positions, (3) for EACH column the 4 time values in rows 48, 25, 15, 12 and the duty percentage from row %.
+CRITICAL ALIGNMENT RULE: The printed anchor date belongs to the day column directly underneath/at the same horizontal x-position as that date text. It is NOT automatically the Today column. Match the anchor date to the weekday header in that same column first. Example: if "27. October 2026" is positioned above the Tuesday column, the Tuesday column date is 27/Oct/2026 and its Duty must come from the % value physically under Tuesday (84% in the reference example), NOT the adjacent column's 85%. Assign each metric and Duty by visual column alignment, not by OCR token order. Then infer dates for neighboring weekday columns from the matched anchor weekday/date.
 Skip the "Since reset" column (accumulated totals) entirely. Column with all zero times (only 0:00) has no data - output empty strings.
 Dates output as DD/Mon/YYYY (e.g. 16/Oct/2026). Day as the full English weekday name (e.g. Friday, Saturday). Output ONLY JSON:
       {
